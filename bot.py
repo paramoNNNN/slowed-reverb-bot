@@ -17,7 +17,7 @@ def handle(msg):
       title = msg['audio']['title'] if 'title' in msg['audio'] else 'Untitled (slowed + reverb)'
       bot.download_file(msg['audio']['file_id'], 'temp/temp.mp3')
 
-      fx = (AudioEffectsChain().reverb().speed(0.7))
+      fx = (AudioEffectsChain().reverb().speed(0.3))
       y, sr = load('temp/temp.mp3')
       fx(y, 'outputs/temp.mp3')
       
@@ -25,7 +25,7 @@ def handle(msg):
       audiofile.rename('%s - %s (slowed + reverb)' % (artist, title))
       audiofile.initTag()
       audiofile.tag.artist = artist
-      audiofile.tag.title = title + '(slowed + reverb)'
+      audiofile.tag.title = title + ' (slowed + reverb)'
       audiofile.tag.save()
 
       audio = open('outputs/%s - %s (slowed + reverb).mp3' % (artist, title), 'rb')
