@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import eyed3
@@ -30,6 +31,7 @@ def handle(msg):
 
       audio = open('outputs/%s - %s (slowed + reverb).mp3' % (artist, title), 'rb')
       bot.sendAudio(summary[2], audio)
+      os.remove('outputs/%s - %s (slowed + reverb).mp3' % (artist, title))
 
 
 TOKEN = sys.argv[1]  # get token from command-line
