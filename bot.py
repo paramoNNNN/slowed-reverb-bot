@@ -30,6 +30,7 @@ def handle(msg):
       audiofile.tag.save()
 
       audio = open('outputs/%s - %s (slowed + reverb).mp3' % (artist, title), 'rb')
+      bot.sendChatAction(summary[2], 'upload_audio')
       bot.sendAudio(summary[2], audio)
       os.remove('outputs/%s - %s (slowed + reverb).mp3' % (artist, title))
 
