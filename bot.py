@@ -18,7 +18,7 @@ def handle(msg):
       title = msg['audio']['title'] if 'title' in msg['audio'] else 'Untitled (slowed + reverb)'
       bot.download_file(msg['audio']['file_id'], 'temp/temp.mp3')
 
-      fx = (AudioEffectsChain().reverb().speed(0.3))
+      fx = (AudioEffectsChain().reverb().speed(0.35))
       y, sr = load('temp/temp.mp3')
       fx(y, 'outputs/temp.mp3')
       
