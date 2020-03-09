@@ -25,7 +25,7 @@ def handle(msg):
       audiofile.rename('%s - %s (slowed + reverb)' % (artist, title))
       audiofile.initTag()
       audiofile.tag.artist = artist
-      audiofile.tag.title = title
+      audiofile.tag.title = title + '(slowed + reverb)'
       audiofile.tag.save()
 
       audio = open('outputs/%s - %s (slowed + reverb).mp3' % (artist, title), 'rb')
