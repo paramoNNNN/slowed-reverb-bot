@@ -23,12 +23,11 @@ def handle(msg):
       fx(y, 'temp/temp.mp3')
       
       audiofile = eyed3.load('temp/temp.mp3')
-      audiofile.rename('%s - %s (slowed + reverb)' % (artist, title))
       audiofile.initTag()
       audiofile.tag.artist = artist
       audiofile.tag.title = title + ' (slowed + reverb)'
       audiofile.tag.save()
-      os.rename('temp/%s - %s (slowed + reverb).mp3' % (artist, title),
+      os.rename('temp/temp.mp3',
                 'outputs/%s - %s (slowed + reverb).mp3' % (artist, title))
 
       audio = open('outputs/%s - %s (slowed + reverb).mp3' % (artist, title), 'rb')
