@@ -47,7 +47,7 @@ def handle(msg):
 
         audio = open('outputs/%s - %s (slowed + reverb).mp3' % (artist, title), 'rb')
         bot.sendChatAction(summary[2], 'upload_audio')
-        bot.sendAudio(summary[2], audio)
+        bot.sendAudio(summary[2], audio, performer=artist, title=title + ' (slowed + reverb)', duration=int(audiofile.info.time_secs))
 
 TOKEN = sys.argv[1]  # get token from command-line
 
