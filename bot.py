@@ -24,6 +24,7 @@ def handle(msg):
               'sox',
               '-N',
               '-V1',
+              '--ignore-length',
               'temp/temp.mp3',
               '-C 320 -r 44100 -b 24 -c 2',
               'temp/temp2.mp3',
