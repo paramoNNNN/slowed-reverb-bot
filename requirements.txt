@@ -4,6 +4,7 @@ async-timeout==3.0.1
 asyncio==3.4.3
 attrs==19.3.0
 audioread==2.1.8
+certifi==2019.11.28
 cffi==1.14.0
 chardet==3.0.4
 dataclasses==0.7
@@ -28,7 +29,7 @@ pycparser==2.20
 pylint==2.4.4
 pyparsing==2.4.6
 pysndfx==0.3.6
-requests==2.7.0
+requests==2.23.0
 resampy==0.2.2
 scikit-learn==0.22.2.post1
 scipy==1.4.1
@@ -41,3 +42,4 @@ typing-extensions==3.7.4.1
 urllib3==1.25.8
 wrapt==1.11.2
 yarl==1.4.2
+youtube-dl==2020.3.24
