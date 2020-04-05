@@ -93,7 +93,10 @@ def addEffect(audio_file, chat_id, speed=None, pitch=None, tempo=None):
     audiofile = eyed3.load('temp/temp2.mp3')
     audiofile.initTag()
     audiofile.tag.artist = artist
-    audiofile.tag.title = title + ' (slowed + reverb)'
+    if speed:
+      audiofile.tag.title = title + ' (slowed + reverb)'
+    else:
+      audiofile.tag.title = title
     audiofile.tag.save()
     os.rename('temp/temp2.mp3',
               'outputs/%s - %s (slowed + reverb).mp3' % (artist, title))
