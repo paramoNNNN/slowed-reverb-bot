@@ -9,17 +9,57 @@ from librosa import load
 from subprocess import PIPE, Popen
 from telepot.loop import MessageLoop
 
-def addEffect(audio_file, chat_id):
+def addEffect(audio_file, chat_id, speed='0.75', pitch='1'):
   if isinstance(audio_file, dict):
     artist = audio_file['performer'] if 'performer' in audio_file else 'Unknown Artist'
     title = audio_file['title'] if 'title' in audio_file else 'Untitled (slowed + reverb)'
     bot.sendMessage(chat_id, 'Downloading...')
     bot.download_file(audio_file['file_id'], 'temp/temp.mp3')
   elif isinstance(audio_file, str):
-    meta = audio_file.split('-')
-    artist = meta[0][:-1]
-    title = meta[1][:-4][1:]
-    os.rename(audio_file, 'temp/temp.mp3')
+    if audio_file.startswith('https://www.youtube.com/watch?v=') or\
+        audio_file.startswith('https://youtube.com/watch?v=') or\
+          audio_file.startswith('https://youtu.be/'):
+      ydl_opts = {
+        'outtmpl': '%(title)s.%(ext)s',
+        'format': 'bestaudio/best',
+        'postprocessors': [
+          {
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '320',
+          },
+          {
+            'key': 'MetadataFromTitle',
+            'titleformat': '(?P<artist>.*)-(?P<track>.*)',
+          }
+        ],
+        '_titleformat': '(?P<artist>.*)-(?P<track>.*)'
+      }
+
+      with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        bot.sendMessage(chat_id, 'Downloading...')
+        info = ydl.extract_info(audio_file, download=True)
+        file_name = ydl.prepare_filename(info)
+        file_name = file_name.split('.')[0]
+        meta = file_name.split('-')
+        if len(meta) > 1:
+          artist = meta[0][:-1]
+          title = meta[1][:-4][1:]
+        else:
+          artist = 'Unknown Artist'
+          title = meta[0][:-4]
+        os.rename(file_name + '.mp3', 'temp/temp.mp3')
+    else:
+      meta = audio_file.split('-')
+      if len(meta) > 1:
+        artist = meta[0][:-1]
+        title = meta[1][:-4][1:]
+      else:
+        artist = 'Unknown Artist'
+        title = meta[0][:-4]
+      os.rename(audio_file, 'temp/temp.mp3')
+  else:
+    return
 
   cmd = shlex.split(
       ' '.join([
@@ -57,35 +97,13 @@ def handle(msg):
     summary = telepot.glance(msg, flavor=flavor)
     print(flavor, summary)
 
-    if summary[0] == 'audio':
-      addEffect(msg['audio'], summary[2])
-    elif summary[0] == 'text':
+    if summary[0] == 'text':
       if '/slowedreverb' in msg['text']:
-        if 'reply_to_message' in msg and 'audio' in msg['reply_to_message']:
-          addEffect(msg['reply_to_message']['audio'], summary[2])
-      elif msg['text'].startswith('https://www.youtube.com/watch?v='):
-        ydl_opts = {
-          'outtmpl': '%(title)s.%(ext)s',
-          'format': 'bestaudio/best',
-          'postprocessors': [
-            {
-              'key': 'FFmpegExtractAudio',
-              'preferredcodec': 'mp3',
-              'preferredquality': '320',
-            },
-            {
-              'key': 'MetadataFromTitle',
-              'titleformat': '(?P<artist>.*)-(?P<track>.*)',
-            }
-          ],
-          '_titleformat': '(?P<artist>.*)-(?P<track>.*)'
-        }
-
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-          bot.sendMessage(summary[2], 'Downloading...')
-          info = ydl.extract_info(msg['text'], download=True)
-          file_name = ydl.prepare_filename(info)
-          addEffect(file_name.split('.')[0] + '.mp3', summary[2])  
+        if 'reply_to_message' in msg:
+          if 'audio' in msg['reply_to_message']:
+            addEffect(msg['reply_to_message']['audio'], summary[2])
+          if 'text' in msg['reply_to_message']:
+            addEffect(msg['reply_to_message']['text'], summary[2])
 
 TOKEN = sys.argv[1]  # get token from command-line
 
