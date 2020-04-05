@@ -9,7 +9,7 @@ from librosa import load
 from subprocess import PIPE, Popen
 from telepot.loop import MessageLoop
 
-def addEffect(audio_file, chat_id, speed='0.75', pitch='1'):
+def addEffect(audio_file, chat_id, speed=None, pitch=None, tempo=None):
   if isinstance(audio_file, dict):
     artist = audio_file['performer'] if 'performer' in audio_file else 'Unknown Artist'
     title = audio_file['title'] if 'title' in audio_file else 'Untitled (slowed + reverb)'
@@ -61,6 +61,16 @@ def addEffect(audio_file, chat_id, speed='0.75', pitch='1'):
   else:
     return
 
+  commands = []
+  if speed:
+    commands.append('speed')
+    commands.append(speed)
+  elif pitch:
+    commands.append('pitch')
+    commands.append(pitch)
+  elif tempo:
+    commands.append('tempo')
+    commands.append(tempo)
   cmd = shlex.split(
       ' '.join([
           'sox',
@@ -71,9 +81,9 @@ def addEffect(audio_file, chat_id, speed='0.75', pitch='1'):
           '-C 320 -r 44100 -b 24 -c 2',
           'temp/temp2.mp3',
           'reverb 50 50 100 100 20 0',
-          'speed 0.75',
-      ]),
+      ] + list(map(str, commands))),
       posix=False)
+
   bot.sendMessage(chat_id, 'Adding effects...')
   stdout, stderr = Popen(cmd, stdout=PIPE, stderr=PIPE).communicate()
   if stderr:
@@ -100,10 +110,36 @@ def handle(msg):
     if summary[0] == 'text':
       if '/slowedreverb' in msg['text']:
         if 'reply_to_message' in msg:
+          speed = msg['text'].split(' ')
+          if len(speed) > 1:
+            speed = speed[1]
+          else:
+            speed = '0.75'
           if 'audio' in msg['reply_to_message']:
-            addEffect(msg['reply_to_message']['audio'], summary[2])
+            addEffect(msg['reply_to_message']['audio'], summary[2], speed=speed)
           if 'text' in msg['reply_to_message']:
-            addEffect(msg['reply_to_message']['text'], summary[2])
+            addEffect(msg['reply_to_message']['text'], summary[2], speed=speed)
+      elif '/pitch' in msg['text']:
+          pitch = msg['text'].split(' ')
+          if len(pitch) > 1:
+            pitch = pitch[1]
+          else:
+            pitch = '500'
+          if 'audio' in msg['reply_to_message']:
+            addEffect(msg['reply_to_message']['audio'], summary[2], pitch=pitch)
+          if 'text' in msg['reply_to_message']:
+            addEffect(msg['reply_to_message']['text'], summary[2], pitch=pitch)   
+      elif '/tempo' in msg['text']:
+          tempo = msg['text'].split(' ')
+          if len(tempo) > 1:
+            tempo = tempo[1]
+          else:
+            tempo = '0.8'
+          if 'audio' in msg['reply_to_message']:
+            addEffect(msg['reply_to_message']['audio'], summary[2], tempo=tempo)
+          if 'text' in msg['reply_to_message']:
+            addEffect(msg['reply_to_message']['text'], summary[2], tempo=tempo)   
+
 
 TOKEN = sys.argv[1]  # get token from command-line
 
