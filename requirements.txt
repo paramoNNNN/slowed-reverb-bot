@@ -29,13 +29,11 @@ pycparser==2.20
 pylint==2.4.4
 pyparsing==2.4.6
 pysndfx==0.3.6
-requests==2.7.0
 resampy==0.2.2
 scikit-learn==0.22.2.post1
 scipy==1.4.1
 six==1.14.0
 SoundFile==0.10.3.post1
-telebot==0.0.3
 telepot==12.7
 typed-ast==1.4.1
 typing-extensions==3.7.4.1
