@@ -9,7 +9,31 @@ from librosa import load
 from subprocess import PIPE, Popen
 from telepot.loop import MessageLoop
 
-def addEffect(audio_file, chat_id, speed=None, pitch=None, tempo=None):
+helpMessage = '''
+*Commands*
+- `/slowedreverb`
+Adjust the audio speed (pitch and tempo together). also add reverb effect.
+*Default value if none given:* 0.75
+*Example:* `/slowedreverb 0.8`
+
+- `/reverb`
+Add reverberation to the audio using the ‘freeverb’ algorithm.
+*Default values if none given:* reverberance (50%) HF-damping (50%) room-scale (100%) stereo-depth (100%) pre-delay (20ms) wet-gain (0dB)
+*Example:* `/reverb 50 50 100 100 20 0`
+
+- `/pitch`
+Change the audio playback speed but not its pitch.
+*Default value if none given:* 500
+*Example:* `/pitch 200`
+
+- `/tempo`
+Change the audio pitch (but not tempo).
+shift gives the pitch shift as positive or negative 'cents' (i.e. 100ths of a semitone)
+*Default value if none given:* 0.8
+*Example:* `/tempo 0.9`
+'''
+
+def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=None):
   if isinstance(audio_file, dict):
     artist = audio_file['performer'] if 'performer' in audio_file else 'Unknown Artist'
     title = audio_file['title'] if 'title' in audio_file else 'Untitled (slowed + reverb)'
@@ -47,7 +71,7 @@ def addEffect(audio_file, chat_id, speed=None, pitch=None, tempo=None):
           title = meta[1][:-4][1:]
         else:
           artist = 'Unknown Artist'
-          title = meta[0][:-4]
+          title = meta[0]
         os.rename(file_name + '.mp3', 'temp/temp.mp3')
     else:
       meta = audio_file.split('-')
@@ -65,6 +89,9 @@ def addEffect(audio_file, chat_id, speed=None, pitch=None, tempo=None):
   if speed:
     commands.append('speed')
     commands.append(speed)
+  elif reverb:
+    commands.append('reverb')
+    commands.append(reverb)
   elif pitch:
     commands.append('pitch')
     commands.append(pitch)
@@ -103,7 +130,13 @@ def addEffect(audio_file, chat_id, speed=None, pitch=None, tempo=None):
 
     audio = open('outputs/%s - %s (slowed + reverb).mp3' % (artist, title), 'rb')
     bot.sendChatAction(chat_id, 'upload_audio')
-    bot.sendAudio(chat_id, audio, performer=artist, title=title + ' (slowed + reverb)', duration=int(audiofile.info.time_secs))
+    bot.sendAudio(chat_id, audio, performer=artist, title=audiofile.tag.title, duration=int(audiofile.info.time_secs))
+
+def parse(reply_to_message, chat_id, speed=None, reverb=None, pitch=None, tempo=None):
+  if 'audio' in reply_to_message:
+    addEffect(reply_to_message['audio'], chat_id, speed=speed, reverb=reverb, pitch=pitch, tempo=tempo)
+  if 'text' in reply_to_message:
+    addEffect(reply_to_message['text'], chat_id, speed=speed, reverb=reverb, pitch=pitch, tempo=tempo)
 
 def handle(msg):
     flavor = telepot.flavor(msg)
@@ -118,30 +151,30 @@ def handle(msg):
             speed = speed[1]
           else:
             speed = '0.75'
-          if 'audio' in msg['reply_to_message']:
-            addEffect(msg['reply_to_message']['audio'], summary[2], speed=speed)
-          if 'text' in msg['reply_to_message']:
-            addEffect(msg['reply_to_message']['text'], summary[2], speed=speed)
+          parse(msg['reply_to_message'], summary[2], speed=speed)
+      if '/reverb' in msg['text']:
+        reverb = msg['text'].split(' ')
+        if len(reverb) == 1:
+          reverb = '50 50 100 100 20 0'
+        else:
+          reverb.pop(0)
+        parse(msg['reply_to_message'], summary[2], reverb=reverb)
       elif '/pitch' in msg['text']:
           pitch = msg['text'].split(' ')
           if len(pitch) > 1:
             pitch = pitch[1]
           else:
             pitch = '500'
-          if 'audio' in msg['reply_to_message']:
-            addEffect(msg['reply_to_message']['audio'], summary[2], pitch=pitch)
-          if 'text' in msg['reply_to_message']:
-            addEffect(msg['reply_to_message']['text'], summary[2], pitch=pitch)   
+          parse(msg['reply_to_message'], summary[2], pitch=pitch)
       elif '/tempo' in msg['text']:
           tempo = msg['text'].split(' ')
           if len(tempo) > 1:
             tempo = tempo[1]
           else:
             tempo = '0.8'
-          if 'audio' in msg['reply_to_message']:
-            addEffect(msg['reply_to_message']['audio'], summary[2], tempo=tempo)
-          if 'text' in msg['reply_to_message']:
-            addEffect(msg['reply_to_message']['text'], summary[2], tempo=tempo)   
+          parse(msg['reply_to_message'], summary[2], tempo=tempo)
+      elif '/help' in msg['text']:
+        bot.sendMessage(summary[2], helpMessage, parse_mode='Markdown')
 
 
 TOKEN = sys.argv[1]  # get token from command-line
