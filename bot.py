@@ -173,7 +173,7 @@ def handle(msg):
           else:
             tempo = '0.8'
           parse(msg['reply_to_message'], summary[2], tempo=tempo)
-      elif '/help' in msg['text']:
+      elif '/start' in msg['text'] or '/help' in msg['text']:
         bot.sendMessage(summary[2], helpMessage, parse_mode='Markdown')
 
 
