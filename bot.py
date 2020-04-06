@@ -68,7 +68,7 @@ def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=No
         meta = file_name.split('-')
         if len(meta) > 1:
           artist = meta[0][:-1]
-          title = meta[1][:-4][1:]
+          title = meta[1][1:]
         else:
           artist = 'Unknown Artist'
           title = meta[0]
