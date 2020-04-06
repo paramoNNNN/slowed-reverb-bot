@@ -64,11 +64,11 @@ def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=No
         bot.sendMessage(chat_id, 'Downloading...')
         info = ydl.extract_info(audio_file, download=True)
         file_name = ydl.prepare_filename(info)
-        file_name = file_name.split('.')[0]
+        file_name = file_name[:-5]
         meta = file_name.split('-')
         if len(meta) > 1:
           artist = meta[0][:-1]
-          title = meta[1][:-4][1:]
+          title = meta[1][1:]
         else:
           artist = 'Unknown Artist'
           title = meta[0]
