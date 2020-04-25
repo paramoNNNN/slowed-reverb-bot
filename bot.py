@@ -98,7 +98,7 @@ def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=No
     commands.append(speed)
   if reverb:
     commands.append('reverb')
-    commands.append(reverb)
+    commands.append(' '.join(reverb))
   if pitch:
     commands.append('pitch')
     commands.append(pitch)
