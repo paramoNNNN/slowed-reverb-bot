@@ -128,6 +128,8 @@ def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=No
     audiofile.tag.artist = artist
     if speed and reverb:
       audiofile.tag.title = title + ' (slowed + reverb)'
+    elif speed and not reverb:
+      audiofile.tag.title = title + ' (slowed)'
     else:
       audiofile.tag.title = title
     audiofile.tag.save()
