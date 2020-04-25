@@ -29,12 +29,12 @@ Add reverberation to the audio using the ‘freeverb’ algorithm.
 *Example:* `/reverb 50 50 100 100 20 0`
 
 - `/pitch`
-Change the audio playback speed but not its pitch.
+Change the audio pitch (but not tempo).
 *Default value if none given:* 500
 *Example:* `/pitch 200`
 
 - `/tempo`
-Change the audio pitch (but not tempo).
+Change the audio playback speed but not its pitch.
 shift gives the pitch shift as positive or negative 'cents' (i.e. 100ths of a semitone)
 *Default value if none given:* 0.8
 *Example:* `/tempo 0.9`
