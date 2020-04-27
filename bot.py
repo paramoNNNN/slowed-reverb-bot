@@ -135,11 +135,11 @@ def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=No
       audiofile.tag.title = title
     audiofile.tag.save()
     os.rename('temp/temp2.mp3',
-              'outputs/%s - %s.mp3' % (artist, audiofile.tag.title))
+              'outputs/%s - %s.mp3' % (audiofile.tag.artist, audiofile.tag.title))
 
-    audio = open('outputs/%s - %s.mp3' % (artist, audiofile.tag.title), 'rb')
+    audio = open('outputs/%s - %s.mp3' % (audiofile.tag.artist, audiofile.tag.title), 'rb')
     bot.sendChatAction(chat_id, 'upload_audio')
-    bot.sendAudio(chat_id, audio, performer=artist, title=audiofile.tag.title, duration=int(audiofile.info.time_secs))
+    bot.sendAudio(chat_id, audio, performer=audiofile.tag.artist, title=audiofile.tag.title, duration=int(audiofile.info.time_secs))
 
 def parse(reply_to_message, chat_id, speed=None, reverb=None, pitch=None, tempo=None):
   if 'audio' in reply_to_message:
