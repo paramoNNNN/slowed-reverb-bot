@@ -116,7 +116,6 @@ def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=No
           'temp/temp2.mp3',
       ] + list(map(str, commands))),
       posix=False)
-
   bot.sendMessage(chat_id, 'Adding effects...')
   stdout, stderr = Popen(cmd, stdout=PIPE, stderr=PIPE).communicate()
   if stderr:
@@ -159,7 +158,7 @@ def handle(msg):
             speed = speed[1]
           else:
             speed = '0.75'
-          parse(msg['reply_to_message'], summary[2], speed=speed, reverb='50 50 100 100 20 0')
+          parse(msg['reply_to_message'], summary[2], speed=speed, reverb=['50', '50', '100', '100', '20', '0'])
         elif '/speed' in msg['text']:
           speed = msg['text'].split(' ')
           if len(speed) > 1:
@@ -170,7 +169,7 @@ def handle(msg):
         elif '/reverb' in msg['text']:
           reverb = msg['text'].split(' ')
           if len(reverb) == 1:
-            reverb = '50 50 100 100 20 0'
+            reverb = ['50', '50', '100', '100', '20', '0']
           else:
             reverb.pop(0)
           parse(msg['reply_to_message'], summary[2], reverb=reverb)
