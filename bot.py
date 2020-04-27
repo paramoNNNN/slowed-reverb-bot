@@ -42,8 +42,8 @@ shift gives the pitch shift as positive or negative 'cents' (i.e. 100ths of a se
 
 def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=None):
   if isinstance(audio_file, dict):
-    artist = audio_file['performer'] if 'performer' in audio_file else 'Unknown Artist'
-    title = audio_file['title'] if 'title' in audio_file else 'Untitled (slowed + reverb)'
+    artist = audio_file['performer'].lower() if 'performer' in audio_file else 'unknown artist'
+    title = audio_file['title'].lower() if 'title' in audio_file else 'untitled'
     bot.sendMessage(chat_id, 'Downloading...')
     bot.download_file(audio_file['file_id'], 'temp/temp.mp3')
   elif isinstance(audio_file, str):
@@ -74,20 +74,20 @@ def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=No
         file_name = file_name[:-5]
         meta = file_name.split('-')
         if len(meta) > 1:
-          artist = meta[0][:-1]
-          title = meta[1][1:]
+          artist = meta[0][:-1].lower()
+          title = meta[1][1:].lower()
         else:
-          artist = 'Unknown Artist'
-          title = meta[0]
+          artist = 'unknown artist'
+          title = meta[0].lower()
         os.rename(file_name + '.mp3', 'temp/temp.mp3')
     else:
       meta = audio_file.split('-')
       if len(meta) > 1:
-        artist = meta[0][:-1]
-        title = meta[1][:-4][1:]
+        artist = meta[0][:-1].lower()
+        title = meta[1][:-4][1:].lower()
       else:
-        artist = 'Unknown Artist'
-        title = meta[0][:-4]
+        artist = 'unknown artist'
+        title = meta[0][:-4].lower()
       os.rename(audio_file, 'temp/temp.mp3')
   else:
     return
@@ -126,9 +126,9 @@ def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=No
     audiofile.initTag()
     audiofile.tag.artist = artist
     if speed and reverb:
-      audiofile.tag.title = title + ' (slowed + reverb)'
+      audiofile.tag.title = title + ' ﾉ slowed + reverb ﾉ'
     elif speed and not reverb and float(speed) < 1:
-      audiofile.tag.title = title + ' (slowed)'
+      audiofile.tag.title = title + ' ﾉ slowed ﾉ'
     else:
       audiofile.tag.title = title
     audiofile.tag.save()
