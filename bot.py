@@ -42,8 +42,8 @@ shift gives the pitch shift as positive or negative 'cents' (i.e. 100ths of a se
 
 def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=None):
   if isinstance(audio_file, dict):
-    artist = audio_file['performer'] if 'performer' in audio_file else 'Unknown Artist'
-    title = audio_file['title'] if 'title' in audio_file else 'Untitled (slowed + reverb)'
+    artist = audio_file['performer'] if 'performer' in audio_file else 'unknown artist'
+    title = audio_file['title'] if 'title' in audio_file else 'untitled'
     bot.sendMessage(chat_id, 'Downloading...')
     bot.download_file(audio_file['file_id'], 'temp/temp.mp3')
   elif isinstance(audio_file, str):
@@ -77,7 +77,7 @@ def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=No
           artist = meta[0][:-1]
           title = meta[1][1:]
         else:
-          artist = 'Unknown Artist'
+          artist = 'unknown artist'
           title = meta[0]
         os.rename(file_name + '.mp3', 'temp/temp.mp3')
     else:
@@ -86,7 +86,7 @@ def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=No
         artist = meta[0][:-1]
         title = meta[1][:-4][1:]
       else:
-        artist = 'Unknown Artist'
+        artist = 'unknown artist'
         title = meta[0][:-4]
       os.rename(audio_file, 'temp/temp.mp3')
   else:
@@ -126,18 +126,20 @@ def addEffect(audio_file, chat_id, speed=None, reverb=None, pitch=None, tempo=No
     audiofile.initTag()
     audiofile.tag.artist = artist
     if speed and reverb:
-      audiofile.tag.title = title + ' (slowed + reverb)'
+      audiofile.tag.artist = artist.lower()
+      audiofile.tag.title = title.lower() + ' ﾉ slowed + reverb ﾉ'
     elif speed and not reverb and float(speed) < 1:
-      audiofile.tag.title = title + ' (slowed)'
+      audiofile.tag.artist = artist.lower()
+      audiofile.tag.title = title.lower() + ' ﾉ slowed ﾉ'
     else:
       audiofile.tag.title = title
     audiofile.tag.save()
     os.rename('temp/temp2.mp3',
-              'outputs/%s - %s.mp3' % (artist, audiofile.tag.title))
+              'outputs/%s - %s.mp3' % (audiofile.tag.artist, audiofile.tag.title))
 
-    audio = open('outputs/%s - %s.mp3' % (artist, audiofile.tag.title), 'rb')
+    audio = open('outputs/%s - %s.mp3' % (audiofile.tag.artist, audiofile.tag.title), 'rb')
     bot.sendChatAction(chat_id, 'upload_audio')
-    bot.sendAudio(chat_id, audio, performer=artist, title=audiofile.tag.title, duration=int(audiofile.info.time_secs))
+    bot.sendAudio(chat_id, audio, performer=audiofile.tag.artist, title=audiofile.tag.title, duration=int(audiofile.info.time_secs))
 
 def parse(reply_to_message, chat_id, speed=None, reverb=None, pitch=None, tempo=None):
   if 'audio' in reply_to_message:
