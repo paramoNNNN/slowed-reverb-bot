@@ -8,7 +8,7 @@ from celery import Celery
 from datetime import datetime
 from subprocess import PIPE, Popen
 
-app = Celery('tasks', backend='rpc://', broker='pyamqp://guest@localhost//')
+app = Celery('tasks', backend='redis://localhost:6379/0', broker='redis://localhost:6379/0')
 
 
 TOKEN = open('token', 'r').read()

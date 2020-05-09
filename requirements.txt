@@ -22,6 +22,7 @@ packaging==20.3
 pylint==2.5.2
 pyparsing==2.4.7
 pytz==2020.1
+redis==3.5.0
 six==1.14.0
 telepot==12.7
 toml==0.10.0
