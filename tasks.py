@@ -124,4 +124,7 @@ def addEffect(audio_file, message_id, chat_id, speed=None, reverb=None, pitch=No
 
     audio = open('outputs/%s - %s.mp3' % (audiofile.tag.artist, audiofile.tag.title), 'rb')
     bot.sendChatAction(chat_id, 'upload_audio')
-    bot.sendAudio(chat_id, audio, performer=audiofile.tag.artist, title=audiofile.tag.title, duration=int(audiofile.info.time_secs))
+    try:
+      bot.sendAudio(chat_id, audio, reply_to_message_id=message_id, performer=audiofile.tag.artist, title=audiofile.tag.title, duration=int(audiofile.info.time_secs))
+    except:
+      bot.sendAudio(chat_id, audio, performer=audiofile.tag.artist, title=audiofile.tag.title, duration=int(audiofile.info.time_secs))
