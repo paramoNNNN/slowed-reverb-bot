@@ -55,8 +55,10 @@ shift gives the pitch shift as positive or negative 'cents' (i.e. 100ths of a se
 async def parse(reply_to_message, message_id, chat_id, speed=None, reverb=None, pitch=None, tempo=None):
   if 'audio' in reply_to_message:
     Thread(target=addEffect.delay, args=(reply_to_message['audio'], message_id, chat_id, speed, reverb, pitch, tempo)).start()
-  if 'text' in reply_to_message:
+  elif 'text' in reply_to_message:
     Thread(target=addEffect.delay, args=(reply_to_message['text'], message_id, chat_id, speed, reverb, pitch, tempo)).start()
+  elif 'voice' in reply_to_message:
+    Thread(target=addEffect.delay, args=(reply_to_message['voice'], message_id, chat_id, speed, reverb, pitch, tempo)).start()
 
   active_queues = celery_inspect.active()
   if len(active_queues[worker_name]) >= total_workers:
