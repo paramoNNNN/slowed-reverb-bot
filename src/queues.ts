@@ -22,7 +22,7 @@ const addEffectWorker = new Worker("AddEffect", async (job) => {
 
   bot.telegram
     .sendMessage(chatId, "Downloading...", { reply_to_message_id: messageId })
-    .catch(() => {});
+    .catch((e) => writeLog(messageId, "Error", JSON.stringify(e)));
 
   bot.telegram
     .getFileLink(audio.file_id)
@@ -43,7 +43,8 @@ const addEffectWorker = new Worker("AddEffect", async (job) => {
             .sendMessage(chatId, "Adding effects...", {
               reply_to_message_id: messageId,
             })
-            .catch(() => {});
+            .catch((e) => writeLog(messageId, "Error", JSON.stringify(e)));
+
           exec(`${soxCommand} ${commands.join(" ")}`, (error, _, stderr) => {
             if (error || stderr)
               return bot.telegram.sendMessage(
@@ -54,13 +55,11 @@ const addEffectWorker = new Worker("AddEffect", async (job) => {
             writeLog(messageId, "Added effects", `${artist} - ${title}`);
 
             artist = `${artist.toLowerCase()}`;
-            title = `${title.toLowerCase()} ${
-              speed && reverb
-                ? "ﾉ slowed + reverb ﾉ"
-                : speed && !reverb
-                ? " ﾉ slowed ﾉ"
-                : ""
-            }`;
+            title = title.toLowerCase();
+            if (speed && reverb) title = `${title} ${"ﾉ slowed + reverb ﾉ"}`;
+            else if (speed && !reverb) title = `${title} ${"ﾉ slowed ﾉ"}`;
+            else title = `${title}`;
+
             const tags = {
               ...NodeID3.read(`temp/temp_${messageId}.mp3`),
               artist,
@@ -104,4 +103,15 @@ const addEffectWorker = new Worker("AddEffect", async (job) => {
     .catch((err) =>
       console.log(`${new Date().toISOString()}/${messageId} Error: ${err}`)
     );
+});
+
+addEffectWorker.on("failed", (job, err) => {
+  const { chatId, messageId } = job.data;
+
+  writeLog(messageId, "Error", JSON.stringify(err));
+  bot.telegram.sendMessage(
+    chatId,
+    `Something unexpected happend \n code: ${messageId}`,
+    { reply_to_message_id: messageId }
+  );
 });
