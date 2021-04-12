@@ -73,14 +73,12 @@ const addQueue = (
   }
 };
 
-bot
-  .command("slowedreverb", (ctx) => {
-    if (checkMessage(ctx)) {
-      const speed = splitMessage(ctx, "0.75");
-      addQueue(ctx, speed, ["50", "50", "100", "100", "20", "0"]);
-    }
-  })
-  .catch(() => {});
+bot.command("slowedreverb", (ctx) => {
+  if (checkMessage(ctx)) {
+    const speed = splitMessage(ctx, "0.75");
+    addQueue(ctx, speed, ["50", "50", "100", "100", "20", "0"]);
+  }
+});
 
 bot.command("speed", (ctx) => {
   if (checkMessage(ctx)) {

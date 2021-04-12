@@ -6,14 +6,12 @@ import { exec } from "child_process";
 import NodeID3 from "node-id3";
 import { getAudioDurationInSeconds } from "get-audio-duration";
 import dotenv from "dotenv";
+import { writeLog } from "./helpers/logger";
 
 dotenv.config();
 
 const bot: Telegraf = new Telegraf(process.env.TOKEN);
 export const addEffectQueue = new Queue("AddEffect");
-
-const writeLog = (messageId: string, type: string, message: unknown) =>
-  console.log(`${new Date().toISOString()}/${messageId} ${type}: ${message}`);
 
 const addEffectWorker = new Worker("AddEffect", async (job) => {
   const { audio, messageId, chatId, speed, reverb, pitch, tempo } = job.data;
@@ -100,9 +98,7 @@ const addEffectWorker = new Worker("AddEffect", async (job) => {
         })
       )
     )
-    .catch((err) =>
-      console.log(`${new Date().toISOString()}/${messageId} Error: ${err}`)
-    );
+    .catch((err) => writeLog(messageId, "Error", JSON.stringify(err)));
 });
 
 addEffectWorker.on("failed", (job, err) => {
