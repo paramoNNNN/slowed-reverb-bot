@@ -13,6 +13,11 @@ Adjust the audio speed (pitch and tempo together) with reverb effect.
 <b>Default value if none given:</b> 0.75
 <b>Example:</b> <code>/slowedreverb 0.8</code>
 
+- <code>/spedupreverb</code>
+Adjust the audio speed (pitch and tempo together) with reverb effect.
+<b>Default value if none given:</b> 1.2
+<b>Example:</b> <code>/spedupreverb 1.4</code>
+
 - <code>/speed</code>
 Adjust the audio speed (pitch and tempo together).
 <b>Default value if none given:</b> 0.75
@@ -76,6 +81,13 @@ const addQueue = (
 bot.command("slowedreverb", (ctx) => {
   if (checkMessage(ctx)) {
     const speed = splitMessage(ctx, "0.75");
+    addQueue(ctx, speed, ["50", "50", "100", "100", "20", "0"]);
+  }
+});
+
+bot.command("spedupreverb", (ctx) => {
+  if (checkMessage(ctx)) {
+    const speed = splitMessage(ctx, "1.2");
     addQueue(ctx, speed, ["50", "50", "100", "100", "20", "0"]);
   }
 });

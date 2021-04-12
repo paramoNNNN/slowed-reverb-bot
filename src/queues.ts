@@ -54,9 +54,15 @@ const addEffectWorker = new Worker("AddEffect", async (job) => {
 
             artist = `${artist.toLowerCase()}`;
             title = title.toLowerCase();
-            if (speed && reverb) title = `${title} ${"ﾉ slowed + reverb ﾉ"}`;
-            else if (speed && !reverb) title = `${title} ${"ﾉ slowed ﾉ"}`;
-            else title = `${title}`;
+            if (speed) {
+              if (reverb) {
+                if (parseFloat(speed) > 1)
+                  title = `${title} ${"ﾉ sped up + reverb ﾉ"}`;
+                else title = `${title} ${"ﾉ slowed + reverb ﾉ"}`;
+              } else if (parseFloat(speed) > 1)
+                title = `${title} ${"ﾉ sped up ﾉ"}`;
+              else title = `${title} ${"ﾉ slowed ﾉ"}`;
+            }
 
             const tags = {
               ...NodeID3.read(`temp/temp_${messageId}.mp3`),
