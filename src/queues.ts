@@ -15,8 +15,8 @@ export const addEffectQueue = new Queue("AddEffect");
 
 const addEffectWorker = new Worker("AddEffect", async (job) => {
   const { audio, messageId, chatId, speed, reverb, pitch, tempo } = job.data;
-  let artist: string = audio.performer || "Unknown Artist";
-  let title: string = audio.title || "untiled";
+  let artist: string = (audio.performer || "Unknown Artist").replace("/", "-");
+  let title: string = (audio.title || "untiled").replace("/", "-");
 
   bot.telegram
     .sendMessage(chatId, "Downloading...", { reply_to_message_id: messageId })
