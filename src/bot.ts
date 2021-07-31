@@ -1,6 +1,9 @@
 import { Telegraf } from "telegraf";
-import { addEffectQueue } from "./queues";
 import dotenv from "dotenv";
+
+import { addEffectQueue } from "./queues";
+import { checkMessage, splitMessage } from "./utils";
+import { CTX } from "./types";
 
 dotenv.config();
 
@@ -45,37 +48,24 @@ const bot: Telegraf = new Telegraf(process.env.TOKEN);
 bot.start((ctx) => ctx.replyWithHTML(helpMessage));
 bot.help((ctx) => ctx.replyWithHTML(helpMessage));
 
-// TODO: Set a proper type to ctx
-const checkMessage = (ctx: any) =>
-  ctx.update.message.reply_to_message &&
-  "audio" in ctx.update.message.reply_to_message;
-
-// TODO: Set a proper type to ctx
-const splitMessage = (ctx: any, defaultValue: string | string[]) => {
-  const message = ctx.update.message.text.split(" ");
-  return message.length > 1 ? message[1] : defaultValue;
-};
-
-// TODO: Set a proper type to ctx
 const addQueue = (
-  ctx: any,
+  ctx: CTX,
   speed?: string,
   reverb?: string[],
   pitch?: string,
   tempo?: string
 ) => {
   const message = ctx.update.message.reply_to_message;
-  if (message && "audio" in message) {
-    addEffectQueue.add("process", {
-      audio: message.audio,
-      messageId: ctx.message.message_id,
-      chatId: ctx.chat.id,
-      speed,
-      reverb,
-      pitch,
-      tempo,
-    });
-  }
+
+  addEffectQueue.add("process", {
+    audio: message && "audio" in message ? message.audio : "",
+    messageId: ctx.message.message_id,
+    chatId: ctx.chat.id,
+    speed,
+    reverb,
+    pitch,
+    tempo,
+  });
 };
 
 bot.command("slowedreverb", (ctx) => {
@@ -102,7 +92,7 @@ bot.command("speed", (ctx) => {
 bot.command("reverb", (ctx) => {
   if (checkMessage(ctx)) {
     let reverb = ctx.update.message.text.split(" ");
-    if (reverb.length > 0) reverb.shift();
+    if (reverb.length > 1) reverb.shift();
     else reverb = ["50", "50", "100", "100", "20", "0"];
     addQueue(ctx, undefined, reverb);
   }
