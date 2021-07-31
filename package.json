@@ -6,7 +6,8 @@
     "get-audio-duration": "^2.0.3",
     "got": "^11.8.2",
     "node-id3": "^0.2.2",
-    "telegraf": "^4.1.2"
+    "telegraf": "^4.1.2",
+    "ytdl-core": "^4.9.0"
   },
   "devDependencies": {
     "@types/node": "^14.14.31",
