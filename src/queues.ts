@@ -1,11 +1,13 @@
-import { Telegraf } from "telegraf";
+import { getAudioDurationInSeconds } from "get-audio-duration";
 import { Queue, Worker } from "bullmq";
+import { exec } from "child_process";
+import { Telegraf } from "telegraf";
+import youtubedl from "ytdl-core";
+import NodeID3 from "node-id3";
+import dotenv from "dotenv";
 import axios from "axios";
 import fs from "fs";
-import { exec } from "child_process";
-import NodeID3 from "node-id3";
-import { getAudioDurationInSeconds } from "get-audio-duration";
-import dotenv from "dotenv";
+
 import { writeLog } from "./helpers/logger";
 
 dotenv.config();
@@ -15,6 +17,14 @@ export const addEffectQueue = new Queue("AddEffect");
 
 const addEffectWorker = new Worker("AddEffect", async (job) => {
   const { audio, messageId, chatId, speed, reverb, pitch, tempo } = job.data;
+
+  if (typeof audio === "string") {
+    const file = youtubedl(audio, {
+      quality: "highestaudio",
+      filter: "audioonly",
+    });
+  }
+
   let artist: string = (audio.performer || "Unknown Artist").replace("/", "-");
   let title: string = (audio.title || "untiled").replace("/", "-");
 
