@@ -9,7 +9,7 @@ dotenv.config();
 
 const helpMessage = `
 <b>Commands</b>
-Reply to your audio file with one of these commands
+Reply to your audio file or youtube link with one of these commands
 
 - <code>/slowedreverb</code>
 Adjust the audio speed (pitch and tempo together) with reverb effect.
