@@ -56,9 +56,17 @@ const addQueue = (
   tempo?: string
 ) => {
   const message = ctx.update.message.reply_to_message;
+  let audio;
+  if (message) {
+    if ("audio" in message) {
+      audio = message.audio;
+    } else if ("text" in message) {
+      audio = message.text;
+    }
+  }
 
   addEffectQueue.add("process", {
-    audio: message && "audio" in message ? message.audio : "",
+    audio: audio,
     messageId: ctx.message.message_id,
     chatId: ctx.chat.id,
     speed,
