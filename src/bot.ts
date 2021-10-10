@@ -1,8 +1,9 @@
 import { Telegraf } from "telegraf";
 import dotenv from "dotenv";
 
-import { addEffectQueue } from "./queues";
 import { checkMessage, splitMessage } from "./utils";
+import { writeLog } from "./helpers/logger";
+import { addEffectQueue } from "./queues";
 import { CTX } from "./types";
 
 dotenv.config();
@@ -45,8 +46,17 @@ shift gives the pitch shift as positive or negative 'cents' (i.e. 100ths of a se
 
 const bot: Telegraf = new Telegraf(process.env.TOKEN);
 
-bot.start((ctx) => ctx.replyWithHTML(helpMessage));
-bot.help((ctx) => ctx.replyWithHTML(helpMessage));
+bot
+  .start((ctx) => ctx.replyWithHTML(helpMessage))
+  .catch((error) => {
+    writeLog("Unkown Code", "Error", JSON.stringify(error));
+  });
+
+bot
+  .help((ctx) => ctx.replyWithHTML(helpMessage))
+  .catch((error) => {
+    writeLog("Unkown Code", "Error", JSON.stringify(error));
+  });
 
 const addQueue = (
   ctx: CTX,
