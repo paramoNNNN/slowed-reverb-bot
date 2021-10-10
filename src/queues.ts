@@ -7,7 +7,7 @@ import NodeID3 from "node-id3";
 import dotenv from "dotenv";
 import fs from "fs";
 
-import { downloadAudio } from "./utils/audio";
+import { downloadAudio, sendMessage } from "./utils";
 import { writeLog } from "./helpers/logger";
 
 dotenv.config();
@@ -21,9 +21,9 @@ const addEffectWorker = new Worker("AddEffect", async (job) => {
   let artist: string;
   let title: string;
 
-  bot.telegram
-    .sendMessage(chatId, "Downloading...", { reply_to_message_id: messageId })
-    .catch((e) => writeLog(messageId, "Error", JSON.stringify(e)));
+  sendMessage(chatId, "Downloading...", {
+    reply_to_message_id: messageId,
+  });
 
   if (typeof audio === "string") {
     const info = await youtubedl.getInfo(audio);
@@ -52,19 +52,18 @@ const addEffectWorker = new Worker("AddEffect", async (job) => {
   if (tempo) commands.push("tempo", tempo);
   const soxCommand = `sox -N -V1 --ignore-length -G temp/temp_${messageId}.mp3 -C 320 -r 44100 -b 24 -c 2 temp/temp_${messageId}.tmp.mp3`;
 
-  bot.telegram
-    .sendMessage(chatId, "Adding effects...", {
-      reply_to_message_id: messageId,
-    })
-    .catch((e) => writeLog(messageId, "Error", JSON.stringify(e)));
+  sendMessage(chatId, "Adding effects...", {
+    reply_to_message_id: messageId,
+  });
 
   exec(`${soxCommand} ${commands.join(" ")}`, (error, _, stderr) => {
-    if (error || stderr)
-      return bot.telegram.sendMessage(
+    if (error || stderr) {
+      return sendMessage(
         chatId,
         `Something unexpected happend \n code: ${messageId}`,
         { reply_to_message_id: messageId }
       );
+    }
     writeLog(messageId, "Added effects", `${artist} - ${title}`);
 
     artist = `${artist.toLowerCase()}`;
@@ -120,9 +119,7 @@ addEffectWorker.on("failed", (job, err) => {
   const { chatId, messageId } = job.data;
 
   writeLog(messageId, "Error", JSON.stringify(err));
-  bot.telegram.sendMessage(
-    chatId,
-    `Something unexpected happend \n code: ${messageId}`,
-    { reply_to_message_id: messageId }
-  );
+  sendMessage(chatId, `Something unexpected happend \n code: ${messageId}`, {
+    reply_to_message_id: messageId,
+  });
 });
