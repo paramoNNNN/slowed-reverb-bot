@@ -5,9 +5,9 @@ import dotenv from "dotenv";
 import { writeLog } from "../helpers/logger";
 import { CTX } from "../types";
 
-const bot: Telegraf = new Telegraf(process.env.TOKEN);
-
 dotenv.config();
+
+const bot: Telegraf = new Telegraf(process.env.TOKEN);
 
 export const checkMessage = (
   ctx: CTX
