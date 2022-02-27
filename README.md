@@ -10,12 +10,20 @@
 
 # Setup
 
-### Install
+### Requirements
 
-using yarn
-
-`yarn`
+- [Node](https://nodejs.org/en/)
+- [Yarn](https://yarnpkg.com/)
+- [Redis](https://redis.io/)
+- [FFmpeg](https://www.ffmpeg.org/)
+- [SoX](https://sox.sourceforge.io)
 
 ### Configuration
 
-set your TOKEN in `.env` then build and run the bot using `npx tsc && node build/bot.js`
+Set your bot TOKEN in `.env`
+
+### Install and build
+
+- Install packages: `yarn`
+
+- build and run the bot: `yarn tsc && node build/bot.js`
