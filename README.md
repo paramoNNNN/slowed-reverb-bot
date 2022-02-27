@@ -16,10 +16,6 @@ using yarn
 
 `yarn`
 
-or npm
-
-`npm i`
-
 ### Configuration
 
 set your TOKEN in `.env` then build and run the bot using `npx tsc && node build/bot.js`
