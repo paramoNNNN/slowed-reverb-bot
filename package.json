@@ -5,7 +5,7 @@
     "dotenv": "^16.0.0",
     "fluent-ffmpeg": "^2.1.2",
     "get-audio-duration": "^3.0.0",
-    "got": "^11.8.2",
+    "got": "^11.8.5",
     "node-id3": "^0.2.3",
     "telegraf": "^4.7.0",
     "ytdl-core": "^4.10.1"
