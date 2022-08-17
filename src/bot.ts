@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { checkMessage, splitMessage } from "./utils";
 import { writeLog } from "./helpers/logger";
 import { addEffectQueue } from "./queues";
+import { version } from "../package.json";
 import { CTX } from "./types";
 
 dotenv.config();
@@ -42,6 +43,8 @@ Change the audio playback speed but not its pitch.
 shift gives the pitch shift as positive or negative 'cents' (i.e. 100ths of a semitone)
 <b>Default value if none given:</b> 0.8
 <b>Example:</b> <code>/tempo 0.9</code>
+
+<b>v${version}</b>
 `;
 
 const bot: Telegraf = new Telegraf(process.env.TOKEN);
