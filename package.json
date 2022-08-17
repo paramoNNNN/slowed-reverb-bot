@@ -1,4 +1,7 @@
 {
+  "main": "build/src/bot.js",
+  "name": "slowed-reverb-bot",
+  "version": "1.0.1",
   "dependencies": {
     "axios": "^0.27.2",
     "bullmq": "^1.87.2",
