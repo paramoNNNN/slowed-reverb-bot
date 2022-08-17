@@ -26,4 +26,4 @@ Set your bot TOKEN in `.env`
 
 - Install packages: `yarn`
 
-- build and run the bot: `yarn tsc && node build/bot.js`
+- build and run the bot: `yarn tsc && node build/src/bot.js`
