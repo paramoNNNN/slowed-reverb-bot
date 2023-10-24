@@ -694,10 +694,10 @@ functional-red-black-tree@^1.0.1:
   resolved "https://registry.yarnpkg.com/functional-red-black-tree/-/functional-red-black-tree-1.0.1.tgz#1b0ab3bd553b2a0d6399d29c0e3ea0b252078327"
   integrity sha1-GwqzvVU7Kg1jmdKcDj6gslIHgyc=
 
-get-audio-duration@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/get-audio-duration/-/get-audio-duration-3.1.0.tgz#9f49f52dc6ff54932126fc7e7619553db5e326dc"
-  integrity sha512-6NmvRdwQ4qcuJls9CzCOuPuuZAKX4kXh/jlwcrFq2yvycc48NFwBM/1wA1jn5i7FohVIPGTSdVIFdhbjo7Adtw==
+get-audio-duration@^3.1.1:
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/get-audio-duration/-/get-audio-duration-3.1.1.tgz#edc77e5b05923a7e5e707240a7cafcdcea82297c"
+  integrity sha512-358u6qxY3sfK1MAVef5QiazydddrdWGVtLCI/mCPWshZBIIytjVvYN5XuNq5ux0/GMzGiUMV667F1O2zR+Dqqg==
   dependencies:
     "@ffprobe-installer/ffprobe" "^1.4.1"
     execa "^5.0.0"

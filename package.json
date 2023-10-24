@@ -7,7 +7,7 @@
     "bullmq": "^1.87.2",
     "dotenv": "^16.0.1",
     "fluent-ffmpeg": "^2.1.2",
-    "get-audio-duration": "^3.1.0",
+    "get-audio-duration": "^3.1.1",
     "node-id3": "^0.2.3",
     "telegraf": "^4.8.6",
     "ytdl-core": "^4.11.0"
