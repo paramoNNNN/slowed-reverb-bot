@@ -9,7 +9,7 @@
     "fluent-ffmpeg": "^2.1.2",
     "get-audio-duration": "^3.1.0",
     "node-id3": "^0.2.3",
-    "telegraf": "^4.8.6",
+    "telegraf": "^4.15.0",
     "ytdl-core": "^4.11.0"
   },
   "devDependencies": {
