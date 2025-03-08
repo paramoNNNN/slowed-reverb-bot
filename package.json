@@ -3,7 +3,7 @@
   "name": "slowed-reverb-bot",
   "version": "1.0.1",
   "dependencies": {
-    "axios": "^0.27.2",
+    "axios": "^1.8.2",
     "bullmq": "^1.87.2",
     "dotenv": "^16.0.1",
     "fluent-ffmpeg": "^2.1.2",
