@@ -1057,10 +1057,10 @@ node-gyp-build@^4.2.3:
   resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.3.0.tgz#9f256b03e5826150be39c764bf51e993946d71a3"
   integrity sha512-iWjXZvmboq0ja1pUGULQBexmxq8CV4xBhX7VDOTbL7ZR4FOowwY/VOtRxBN/yKxmdGoIp4j5ysNT4u3S2pDQ3Q==
 
-node-id3@^0.2.3:
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/node-id3/-/node-id3-0.2.3.tgz#ae9710eb3e5df0daeacb70bb6fe806913893d35f"
-  integrity sha512-HhaCaW6/nSwTxsTKtZiL7tqV9y1qCRjig37Ep3o0EEunpg1egda1vD6TRBpJb29oXPeLuzaWTaCLIQ9QRk52Ag==
+node-id3@^0.2.9:
+  version "0.2.9"
+  resolved "https://registry.yarnpkg.com/node-id3/-/node-id3-0.2.9.tgz#976acac41a5e1c5619c6ce0760974c591cc1f53a"
+  integrity sha512-dSxhuxrkkGVRgUhDHFxdY0pilzOREcodO01HcZWfaRkCaPWGmo0dOgD8ygyL6ln4Iv4cmfRxAWn1WD9bIB9Bhw==
   dependencies:
     iconv-lite "0.6.2"
 
