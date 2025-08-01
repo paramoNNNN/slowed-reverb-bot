@@ -1,14 +1,14 @@
-import { getAudioDurationInSeconds } from "get-audio-duration";
 import { Queue, Worker } from "bullmq";
 import { exec } from "child_process";
-import { Telegraf } from "telegraf";
-import youtubedl from "ytdl-core";
-import NodeID3 from "node-id3";
 import dotenv from "dotenv";
 import fs from "fs";
+import { getAudioDurationInSeconds } from "get-audio-duration";
+import NodeID3 from "node-id3";
+import { Telegraf } from "telegraf";
+import youtubedl from "ytdl-core";
 
-import { downloadAudio, sendMessage } from "./utils";
 import { writeLog } from "./helpers/logger";
+import { downloadAudio, sendMessage } from "./utils";
 
 dotenv.config();
 
@@ -32,10 +32,7 @@ const addEffectWorker = new Worker(
 
     if (typeof audio === "string") {
       const info = await youtubedl.getInfo(audio);
-      artist = (info.videoDetails.media.artist || "unknown artist").replace(
-        "/",
-        "-"
-      );
+      artist = (info.videoDetails.media.artist || "unknown artist").replace("/", "-");
       title = (info.videoDetails.media.song || "untitled").replace("/", "-");
       const audioStream = youtubedl(audio, { filter: "audioonly" });
       await downloadAudio({ audioStream, audioUrl: audio, messageId });
@@ -63,11 +60,9 @@ const addEffectWorker = new Worker(
 
     exec(`${soxCommand} ${commands.join(" ")}`, (error, _, stderr) => {
       if (error || stderr) {
-        return sendMessage(
-          chatId,
-          `Something unexpected happend \n code: ${messageId}`,
-          { reply_to_message_id: messageId }
-        );
+        return sendMessage(chatId, `Something unexpected happend \n code: ${messageId}`, {
+          reply_to_message_id: messageId,
+        });
       }
       writeLog(messageId, "Added effects", `${artist} - ${title}`);
 
@@ -75,8 +70,7 @@ const addEffectWorker = new Worker(
       title = title.toLowerCase();
       if (speed) {
         if (reverb) {
-          if (parseFloat(speed) > 1)
-            title = `${title} ${"ﾉ sped up + reverb ﾉ"}`;
+          if (parseFloat(speed) > 1) title = `${title} ${"ﾉ sped up + reverb ﾉ"}`;
           else title = `${title} ${"ﾉ slowed + reverb ﾉ"}`;
         } else if (parseFloat(speed) > 1) title = `${title} ${"ﾉ sped up ﾉ"}`;
         else title = `${title} ${"ﾉ slowed ﾉ"}`;
@@ -95,9 +89,7 @@ const addEffectWorker = new Worker(
         async (err) => {
           if (err) return writeLog(messageId, "Error", err);
 
-          const duration = await getAudioDurationInSeconds(
-            `output/${artist} - ${title}.mp3`
-          );
+          const duration = await getAudioDurationInSeconds(`output/${artist} - ${title}.mp3`);
 
           bot.telegram.sendChatAction(chatId, "upload_voice");
           bot.telegram
@@ -109,18 +101,18 @@ const addEffectWorker = new Worker(
                 performer: artist,
                 title: title,
                 duration,
-              }
+              },
             )
             .then(() => {
               writeLog(messageId, "Sent Audio", `${artist} - ${title}`);
               fs.unlinkSync(`output/${artist} - ${title}.mp3`);
               fs.unlinkSync(`temp/temp_${messageId}.mp3`);
             });
-        }
+        },
       );
     });
   },
-  bullmqOptions
+  bullmqOptions,
 );
 
 addEffectWorker.on("failed", (job, err) => {

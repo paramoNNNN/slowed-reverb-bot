@@ -13,7 +13,7 @@ type MountMap = {
 
 type MatchedContext<
   C extends Context,
-  T extends tt.UpdateType | tt.MessageSubType
+  T extends tt.UpdateType | tt.MessageSubType,
 > = NarrowedContext<C, MountMap[T]>;
 
 export type CTX = MatchedContext<Context<Update>, "text">;

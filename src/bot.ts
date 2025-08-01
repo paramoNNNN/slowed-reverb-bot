@@ -1,11 +1,11 @@
-import { Telegraf } from "telegraf";
 import dotenv from "dotenv";
+import { Telegraf } from "telegraf";
 
-import { checkMessage, splitMessage } from "./utils";
+import { version } from "../package.json";
 import { writeLog } from "./helpers/logger";
 import { addEffectQueue } from "./queues";
-import { version } from "../package.json";
-import { CTX } from "./types";
+import type { CTX } from "./types";
+import { checkMessage, splitMessage } from "./utils";
 
 dotenv.config();
 
@@ -61,13 +61,7 @@ bot
     writeLog("Unkown Code", "Error", JSON.stringify(error));
   });
 
-const addQueue = (
-  ctx: CTX,
-  speed?: string,
-  reverb?: string[],
-  pitch?: string,
-  tempo?: string
-) => {
+const addQueue = (ctx: CTX, speed?: string, reverb?: string[], pitch?: string, tempo?: string) => {
   const message = ctx.update.message.reply_to_message;
   let audio;
   if (message) {
