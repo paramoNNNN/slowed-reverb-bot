@@ -1,0 +1,15 @@
+services:
+  redis:
+    container_name: slowed-reverb-redis
+    image: "redis/redis-stack-server:latest"
+    ports:
+      - "6379:6379"
+
+  bot:
+    container_name: slowed-reverb-bot
+    image: tahawx/slowed-reverb:1.0.0
+    build:
+      context: ./
+    restart: always
+    depends_on:
+      - redis
