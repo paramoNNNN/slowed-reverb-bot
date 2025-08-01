@@ -1,23 +1,110 @@
-import { getAudioDurationInSeconds } from "get-audio-duration";
+import { exec } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { Readable } from "node:stream";
 import { Queue, Worker } from "bullmq";
-import { exec } from "child_process";
-import { Telegraf } from "telegraf";
-import youtubedl from "ytdl-core";
-import NodeID3 from "node-id3";
 import dotenv from "dotenv";
-import fs from "fs";
+import ffmpeg from "fluent-ffmpeg";
+import { getAudioDurationInSeconds } from "get-audio-duration";
+import { Bot, InputFile } from "grammy";
+import NodeID3 from "node-id3";
+import type { Logger } from "pino";
+import youtubedl from "ytdl-core";
 
+import { getErrorLogs, log } from "./helpers/logger";
 import { downloadAudio, sendMessage } from "./utils";
-import { writeLog } from "./helpers/logger";
 
 dotenv.config();
 
-const bot: Telegraf = new Telegraf(process.env.TOKEN);
+const bot = new Bot(process.env.TOKEN);
+
 const bullmqOptions = {
   connection: { host: "localhost", port: 6379 },
 };
 export const addEffectQueue = new Queue("AddEffect", bullmqOptions);
 
+type ExecuteSoxCommandParams = {
+  log: Logger;
+  messageId: string | number;
+  inputFile: string;
+  outputFile: string;
+  speed?: string;
+  reverb?: string[];
+  pitch?: string;
+  tempo?: string;
+};
+function executeSoxCommand({
+  log,
+  messageId,
+  inputFile,
+  outputFile,
+  speed,
+  reverb,
+  pitch,
+  tempo,
+}: ExecuteSoxCommandParams) {
+  log.info({ messageId, inputFile, outputFile }, "Starting adding effects");
+
+  const commands: Array<string> = [];
+  if (speed) commands.push("speed", speed);
+  if (reverb) commands.push("reverb", reverb.join(" "));
+  if (pitch) commands.push("pitch", pitch);
+  if (tempo) commands.push("tempo", tempo);
+  const soxCommand = `sox -N -V1 --ignore-length -G ${inputFile} -C 320 -r 44100 -b 16 -c 2 -C 8 ${outputFile}`;
+
+  return new Promise<void>((resolve, reject) => {
+    exec(`${soxCommand} ${commands.join(" ")}`, async (error, _, stderr) => {
+      if (error || stderr) {
+        reject({ error, stderr });
+      }
+      log.info({ messageId, inputFile, outputFile }, "Added effects");
+      resolve();
+    });
+  });
+}
+
+type ConvertAudioToMp3Params = {
+  messageId: string;
+  telegramFile: Awaited<ReturnType<typeof bot.api.getFile>>;
+  file: NodeJS.ArrayBufferView;
+  fileName: string;
+};
+async function convertAudioToMp3({
+  messageId,
+  telegramFile,
+  file,
+  fileName,
+}: ConvertAudioToMp3Params) {
+  const stream = Readable.from([file]);
+  const newTempFileName = `${fileName.split(".").slice(0, -1).join(".")}.mp3`;
+  try {
+    const newFileName = await new Promise<string>((resolve, reject) => {
+      ffmpeg(stream)
+        .addOption(["-vn", "-ar 44100", "-ac 2", "-b:a 320k"])
+        .save(newTempFileName)
+        .on("end", () => {
+          log.info({ messageId, telegramFile, newTempFileName }, "Converted audio file to mp3");
+          if (fileName !== newTempFileName) {
+            log.info({ messageId, fileName }, "Removing old file");
+            fs.unlinkSync(fileName);
+          }
+          resolve(newTempFileName);
+        })
+        .on("error", (error) => {
+          reject(error);
+        });
+    });
+    return newFileName;
+  } catch (error) {
+    log.error(
+      { messageId, telegramFile, error: getErrorLogs(error) },
+      "Something went wrong while converting audio file to mp3",
+    );
+    throw error;
+  }
+}
+
+// TODO: this whole worker thing needs some clean up
 const addEffectWorker = new Worker(
   "AddEffect",
   async (job) => {
@@ -25,109 +112,171 @@ const addEffectWorker = new Worker(
 
     let artist: string;
     let title: string;
+    let tempAudioFileName = `temp/${messageId}_${String(audio.file_name).replace(/[^a-z0-9.]/gi, "")}`;
+    let file: NodeJS.ArrayBufferView | undefined;
+    let telegramFile: Awaited<ReturnType<typeof bot.api.getFile>> | undefined;
 
-    sendMessage(chatId, "Downloading...", {
-      reply_to_message_id: messageId,
+    sendMessage({
+      bot,
+      chatId,
+      text: "Downloading...",
+      options: {
+        reply_to_message_id: messageId,
+      },
     });
 
     if (typeof audio === "string") {
       const info = await youtubedl.getInfo(audio);
-      artist = (info.videoDetails.media.artist || "unknown artist").replace(
-        "/",
-        "-"
-      );
+      artist = (info.videoDetails.media.artist || "unknown artist").replace("/", "-");
       title = (info.videoDetails.media.song || "untitled").replace("/", "-");
       const audioStream = youtubedl(audio, { filter: "audioonly" });
-      await downloadAudio({ audioStream, audioUrl: audio, messageId });
+      await downloadAudio({ audioStream, fileName: tempAudioFileName, messageId });
     } else {
       artist = (audio.performer || "unknown artist").replace("/", "-");
       title = (audio.title || "untitled").replace("/", "-");
 
-      const url = await bot.telegram.getFileLink(audio.file_id);
-      const file = await downloadAudio({ audioUrl: url.href, messageId });
-      fs.writeFile(`temp/temp_${messageId}.mp3`, file.data, (err) => {
-        if (err) return writeLog(messageId, "Error", err);
-      });
+      telegramFile = await bot.api.getFile(audio.file_id);
+      if (telegramFile.file_path) {
+        file = (await downloadAudio({ audioUrl: telegramFile.file_path, messageId })).data;
+        fs.writeFile(tempAudioFileName, file, (error) => {
+          if (error) {
+            log.error({ messageId, error: getErrorLogs(error) }, "Error in writing file");
+          }
+        });
+      } else {
+        throw Error("No file_path in audio file");
+      }
     }
 
-    const commands = [];
-    if (speed) commands.push("speed", speed);
-    if (reverb) commands.push("reverb", reverb.join(" "));
-    if (pitch) commands.push("pitch", pitch);
-    if (tempo) commands.push("tempo", tempo);
-    const soxCommand = `sox -N -V1 --ignore-length -G temp/temp_${messageId}.mp3 -C 320 -r 44100 -b 24 -c 2 temp/temp_${messageId}.tmp.mp3`;
-
-    sendMessage(chatId, "Adding effects...", {
-      reply_to_message_id: messageId,
+    sendMessage({
+      bot,
+      chatId,
+      text: "Adding effects...",
+      options: {
+        reply_to_message_id: messageId,
+      },
     });
 
-    exec(`${soxCommand} ${commands.join(" ")}`, (error, _, stderr) => {
-      if (error || stderr) {
-        return sendMessage(
-          chatId,
-          `Something unexpected happend \n code: ${messageId}`,
-          { reply_to_message_id: messageId }
+    if (tempAudioFileName.split(".").at(-1) !== "mp3") {
+      log.info("Downloaded file is not in mp3 format, converting it to mp3");
+      if (file && telegramFile) {
+        const convertedFileName = await convertAudioToMp3({
+          fileName: tempAudioFileName,
+          messageId,
+          file,
+          telegramFile,
+        });
+        tempAudioFileName = convertedFileName;
+      } else {
+        throw Error("No file or telegram file");
+      }
+    }
+
+    const soxOutputFile = `temp/${messageId}.flac`;
+    await executeSoxCommand({
+      log,
+      messageId,
+      inputFile: tempAudioFileName,
+      outputFile: soxOutputFile,
+      pitch,
+      reverb,
+      speed,
+      tempo,
+    });
+
+    const originalDuration = await getAudioDurationInSeconds(tempAudioFileName);
+    const duration = await getAudioDurationInSeconds(soxOutputFile);
+    if (duration < originalDuration / 2) {
+      log.warn(
+        { messageId, originalDuration, duration },
+        "Something wrong with the processed file, converting it to mp3 and adding effects again",
+      );
+      if (file && telegramFile) {
+        const convertedFileName = await convertAudioToMp3({
+          fileName: tempAudioFileName,
+          messageId,
+          file,
+          telegramFile,
+        });
+        tempAudioFileName = convertedFileName;
+        await executeSoxCommand({
+          log,
+          messageId,
+          inputFile: tempAudioFileName,
+          outputFile: soxOutputFile,
+          pitch,
+          reverb,
+          speed,
+          tempo,
+        });
+      } else {
+        throw Error("No file or telegram file");
+      }
+    }
+
+    artist = `${artist.toLowerCase()}`;
+    title = title.toLowerCase();
+    if (speed) {
+      if (reverb) {
+        if (parseFloat(speed) > 1) title = `${title} ${"ﾉ sped up + reverb ﾉ"}`;
+        else title = `${title} ${"ﾉ slowed + reverb ﾉ"}`;
+      } else if (parseFloat(speed) > 1) title = `${title} ${"ﾉ sped up ﾉ"}`;
+      else title = `${title} ${"ﾉ slowed ﾉ"}`;
+    }
+
+    const tags = {
+      ...NodeID3.read(tempAudioFileName),
+      artist,
+      title,
+    };
+    NodeID3.write(tags, soxOutputFile);
+
+    fs.rename(soxOutputFile, `output/${artist} - ${title}.flac`, async (error) => {
+      if (error) {
+        return log.info(
+          { messageId, artist, title, error: getErrorLogs(error) },
+          "Error in renaming file",
         );
       }
-      writeLog(messageId, "Added effects", `${artist} - ${title}`);
 
-      artist = `${artist.toLowerCase()}`;
-      title = title.toLowerCase();
-      if (speed) {
-        if (reverb) {
-          if (parseFloat(speed) > 1)
-            title = `${title} ${"ﾉ sped up + reverb ﾉ"}`;
-          else title = `${title} ${"ﾉ slowed + reverb ﾉ"}`;
-        } else if (parseFloat(speed) > 1) title = `${title} ${"ﾉ sped up ﾉ"}`;
-        else title = `${title} ${"ﾉ slowed ﾉ"}`;
-      }
+      const duration = await getAudioDurationInSeconds(`output/${artist} - ${title}.flac`);
 
-      const tags = {
-        ...NodeID3.read(`temp/temp_${messageId}.mp3`),
-        artist,
-        title,
-      };
-      NodeID3.write(tags, `temp/temp_${messageId}.tmp.mp3`);
-
-      fs.rename(
-        `temp/temp_${messageId}.tmp.mp3`,
-        `output/${artist} - ${title}.mp3`,
-        async (err) => {
-          if (err) return writeLog(messageId, "Error", err);
-
-          const duration = await getAudioDurationInSeconds(
-            `output/${artist} - ${title}.mp3`
+      const audioFilePath = path.join(__dirname, "../output", `${artist} - ${title}.flac`);
+      const file = new InputFile(fs.readFileSync(audioFilePath));
+      bot.api.sendChatAction(chatId, "upload_voice");
+      bot.api
+        .sendAudio(chatId, file, {
+          reply_to_message_id: messageId,
+          performer: artist,
+          title: title,
+          duration,
+        })
+        .then(() => {
+          log.info({ messageId, artist, title }, "Sent audio file");
+          fs.unlinkSync(`output/${artist} - ${title}.flac`);
+          fs.unlinkSync(tempAudioFileName);
+        })
+        .catch((error) => {
+          log.error(
+            { messageId, artist, title, error: getErrorLogs(error) },
+            "Error in sending audio file",
           );
-
-          bot.telegram.sendChatAction(chatId, "upload_voice");
-          bot.telegram
-            .sendAudio(
-              chatId,
-              { source: `output/${artist} - ${title}.mp3` },
-              {
-                reply_to_message_id: messageId,
-                performer: artist,
-                title: title,
-                duration,
-              }
-            )
-            .then(() => {
-              writeLog(messageId, "Sent Audio", `${artist} - ${title}`);
-              fs.unlinkSync(`output/${artist} - ${title}.mp3`);
-              fs.unlinkSync(`temp/temp_${messageId}.mp3`);
-            });
-        }
-      );
+        });
     });
   },
-  bullmqOptions
+  bullmqOptions,
 );
 
-addEffectWorker.on("failed", (job, err) => {
+addEffectWorker.on("failed", (job, error) => {
   const { chatId, messageId } = job.data;
 
-  writeLog(messageId, "Error", JSON.stringify(err));
-  sendMessage(chatId, `Something unexpected happend \n code: ${messageId}`, {
-    reply_to_message_id: messageId,
+  log.error({ messageId, error: getErrorLogs(error) }, "Error in prcessing queue");
+  sendMessage({
+    bot,
+    chatId,
+    text: `Something unexpected happend \n code: ${messageId}`,
+    options: {
+      reply_to_message_id: messageId,
+    },
   });
 });

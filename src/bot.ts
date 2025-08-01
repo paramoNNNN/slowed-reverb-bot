@@ -1,11 +1,10 @@
-import { Telegraf } from "telegraf";
 import dotenv from "dotenv";
+import { Bot, type CommandContext, type Context } from "grammy";
+import type { Audio } from "grammy/types";
 
-import { checkMessage, splitMessage } from "./utils";
-import { writeLog } from "./helpers/logger";
-import { addEffectQueue } from "./queues";
 import { version } from "../package.json";
-import { CTX } from "./types";
+import { addEffectQueue } from "./queues";
+import { checkMessage, splitMessage } from "./utils";
 
 dotenv.config();
 
@@ -47,29 +46,19 @@ shift gives the pitch shift as positive or negative 'cents' (i.e. 100ths of a se
 <b>v${version}</b>
 `;
 
-const bot: Telegraf = new Telegraf(process.env.TOKEN);
+const bot = new Bot(process.env.TOKEN);
 
-bot
-  .start((ctx) => ctx.replyWithHTML(helpMessage))
-  .catch((error) => {
-    writeLog("Unkown Code", "Error", JSON.stringify(error));
-  });
-
-bot
-  .help((ctx) => ctx.replyWithHTML(helpMessage))
-  .catch((error) => {
-    writeLog("Unkown Code", "Error", JSON.stringify(error));
-  });
+bot.command("help", (ctx) => ctx.reply(helpMessage, { parse_mode: "HTML" }));
 
 const addQueue = (
-  ctx: CTX,
+  ctx: CommandContext<Context>,
   speed?: string,
   reverb?: string[],
   pitch?: string,
-  tempo?: string
+  tempo?: string,
 ) => {
-  const message = ctx.update.message.reply_to_message;
-  let audio;
+  const message = ctx.update.message?.reply_to_message;
+  let audio: string | Audio | undefined;
   if (message) {
     if ("audio" in message) {
       audio = message.audio;
@@ -80,7 +69,7 @@ const addQueue = (
 
   addEffectQueue.add("process", {
     audio: audio,
-    messageId: ctx.message.message_id,
+    messageId: ctx.message?.message_id,
     chatId: ctx.chat.id,
     speed,
     reverb,
@@ -95,7 +84,7 @@ bot.command("slowedreverb", (ctx) => {
     addQueue(ctx, speed, ["50", "50", "100", "100", "20", "0"]);
   }
 });
-
+//
 bot.command("spedupreverb", (ctx) => {
   if (checkMessage(ctx)) {
     const speed = splitMessage(ctx, "1.2");
@@ -112,8 +101,8 @@ bot.command("speed", (ctx) => {
 
 bot.command("reverb", (ctx) => {
   if (checkMessage(ctx)) {
-    let reverb = ctx.update.message.text.split(" ");
-    if (reverb.length > 1) reverb.shift();
+    let reverb = ctx.update.message?.text.split(" ");
+    if (reverb && reverb.length > 1) reverb.shift();
     else reverb = ["50", "50", "100", "100", "20", "0"];
     addQueue(ctx, undefined, reverb);
   }
@@ -134,4 +123,4 @@ bot.command("tempo", (ctx) => {
 });
 
 console.log("Starting slowed+reverb bot");
-bot.launch();
+bot.start();
