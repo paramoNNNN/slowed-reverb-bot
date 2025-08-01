@@ -6,7 +6,7 @@
     "dev": "bun --watch src/bot.ts"
   },
   "dependencies": {
-    "axios": "^0.27.2",
+    "axios": "^0.30.0",
     "bullmq": "^1.87.2",
     "dotenv": "^16.0.1",
     "fluent-ffmpeg": "^2.1.2",
