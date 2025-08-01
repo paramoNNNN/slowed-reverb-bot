@@ -29,7 +29,9 @@ export const downloadAudio = ({
         });
     } else if (audioUrl !== undefined) {
       axios
-        .get(audioUrl, { responseType: "arraybuffer" })
+        .get(`https://api.telegram.org/file/bot${process.env.TOKEN}/${audioUrl}`, {
+          responseType: "arraybuffer",
+        })
         .then((file) => {
           writeLog(messageId, "Downloaded", audioUrl);
           resolve(file);
