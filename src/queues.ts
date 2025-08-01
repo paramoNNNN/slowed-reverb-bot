@@ -8,7 +8,7 @@ import { Bot, InputFile } from "grammy";
 import NodeID3 from "node-id3";
 import youtubedl from "ytdl-core";
 
-import { writeLog } from "./helpers/logger";
+import { getErrorLogs, log } from "./helpers/logger";
 import { downloadAudio, sendMessage } from "./utils";
 
 dotenv.config();
@@ -48,10 +48,22 @@ const addEffectWorker = new Worker(
       title = (audio.title || "untitled").replace("/", "-");
 
       const url = await bot.api.getFile(audio.file_id);
-      const file = await downloadAudio({ audioUrl: url.file_path, messageId });
-      fs.writeFile(`temp/temp_${messageId}.mp3`, file.data, (err) => {
-        if (err) return writeLog(messageId, "Error", err);
-      });
+      if (url.file_path) {
+        const file = await downloadAudio({ audioUrl: url.file_path, messageId });
+        fs.writeFile(`temp/temp_${messageId}.mp3`, file.data, (error) => {
+          if (error) {
+            log.error({ messageId, error: getErrorLogs(error) }, "Error in writing file");
+          }
+        });
+      } else {
+        sendMessage({
+          bot,
+          chatId,
+          text: "Something went wrong, please try again.",
+          options: { reply_to_message_id: messageId },
+        });
+        log.error({ audio, messageId }, "No file_path in the audio file");
+      }
     }
 
     const commands = [];
@@ -83,7 +95,7 @@ const addEffectWorker = new Worker(
           },
         });
       }
-      writeLog(messageId, "Added effects", `${artist} - ${title}`);
+      log.info({ messageId, file: `${artist} - ${title}` }, "Added effects");
 
       artist = `${artist.toLowerCase()}`;
       title = title.toLowerCase();
@@ -105,8 +117,13 @@ const addEffectWorker = new Worker(
       fs.rename(
         `temp/temp_${messageId}.tmp.flac`,
         `output/${artist} - ${title}.flac`,
-        async (err) => {
-          if (err) return writeLog(messageId, "Error", err);
+        async (error) => {
+          if (error) {
+            return log.info(
+              { messageId, artist, title, error: getErrorLogs(error) },
+              "Error in renaming file",
+            );
+          }
 
           const duration = await getAudioDurationInSeconds(`output/${artist} - ${title}.flac`);
 
@@ -121,9 +138,15 @@ const addEffectWorker = new Worker(
               duration,
             })
             .then(() => {
-              writeLog(messageId, "Sent Audio", `${artist} - ${title}`);
-              fs.unlinkSync(`output/${artist} - ${title}.flac`);
-              fs.unlinkSync(`temp/temp_${messageId}.mp3`);
+              log.info({ messageId, artist, title }, "Sent audio file");
+              // fs.unlinkSync(`output/${artist} - ${title}.flac`);
+              // fs.unlinkSync(`temp/temp_${messageId}.mp3`);
+            })
+            .catch((error) => {
+              log.error(
+                { messageId, artist, title, error: getErrorLogs(error) },
+                "Error in sending audio file",
+              );
             });
         },
       );
@@ -132,10 +155,10 @@ const addEffectWorker = new Worker(
   bullmqOptions,
 );
 
-addEffectWorker.on("failed", (job, err) => {
+addEffectWorker.on("failed", (job, error) => {
   const { chatId, messageId } = job.data;
 
-  writeLog(messageId, "Error", JSON.stringify(err));
+  log.error({ messageId, error: getErrorLogs(error) }, "Error in prcessing queue");
   sendMessage({
     bot,
     chatId,

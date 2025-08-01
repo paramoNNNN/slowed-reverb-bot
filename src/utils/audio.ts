@@ -2,41 +2,51 @@ import type { Readable } from "node:stream";
 import axios from "axios";
 import ffmpeg from "fluent-ffmpeg";
 
-import { writeLog } from "../helpers/logger";
+import { getErrorLogs, log } from "../helpers/logger";
 
-interface DownloadAudioParams {
-  audioStream?: Readable;
-  audioUrl?: string;
-  messageId: string;
-}
+type DownloadAudioParams = { messageId: string } & (
+  | { audioStream: Readable }
+  | { audioUrl: string }
+);
 
-export const downloadAudio = ({
-  audioStream,
-  audioUrl,
+export function downloadAudio({
   messageId,
-}: DownloadAudioParams): Promise<{ data: string | NodeJS.ArrayBufferView }> => {
+  ...params
+}: DownloadAudioParams): Promise<{ data: string | NodeJS.ArrayBufferView }> {
   return new Promise((resolve, reject) => {
-    if (audioStream !== undefined) {
-      ffmpeg(audioStream)
+    if ("audioStream" in params) {
+      log.info({ messageId }, `Starting to process audio file`);
+      ffmpeg(params.audioStream)
         .audioBitrate(320)
         .save(`temp/temp_${messageId}.mp3`)
         .on("end", () => {
-          writeLog(messageId, "Downloaded", audioUrl);
+          log.info({ messageId }, `Processed audio file`);
           resolve({ data: "done" });
         })
-        .on("error", (e) => {
-          reject(e);
+        .on("error", (error) => {
+          log.error(
+            { messageId, error: getErrorLogs(error) },
+            "Something went wrong while processing audio file",
+          );
+          reject(error);
         });
-    } else if (audioUrl !== undefined) {
+    } else if ("audioUrl" in params) {
+      log.info({ messageId, audioUrl: params.audioUrl }, `Starting to download audio file`);
       axios
-        .get(`https://api.telegram.org/file/bot${process.env.TOKEN}/${audioUrl}`, {
+        .get(`https://api.telegram.org/file/bot${process.env.TOKEN}/${params.audioUrl}`, {
           responseType: "arraybuffer",
         })
         .then((file) => {
-          writeLog(messageId, "Downloaded", audioUrl);
+          log.info({ messageId, audioUrl: params.audioUrl }, `Downloaded file`);
           resolve(file);
         })
-        .catch((error) => reject(error));
+        .catch((error) => {
+          log.error(
+            { messageId, error: getErrorLogs(error) },
+            "Something went wrong while downloading audio file",
+          );
+          reject(error);
+        });
     }
   });
-};
+}

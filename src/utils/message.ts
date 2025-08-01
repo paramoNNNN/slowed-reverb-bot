@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import type { Api, Bot, CommandContext, Context, RawApi } from "grammy";
 
-import { writeLog } from "../helpers/logger";
+import { getErrorLogs, log } from "../helpers/logger";
 
 dotenv.config();
 
@@ -33,11 +33,10 @@ export function sendMessage({
 }): void {
   bot.api
     .sendMessage(chatId, text, options)
-    .catch((e) =>
-      writeLog(
-        options ? `messageId: ${options.reply_parameters?.message_id}` : `chatId: ${chatId}`,
-        "Error",
-        JSON.stringify(e),
+    .catch((error) =>
+      log.error(
+        { chatId, text, options, error: getErrorLogs(error) },
+        "Something went wrong while sending a message",
       ),
     );
 }
