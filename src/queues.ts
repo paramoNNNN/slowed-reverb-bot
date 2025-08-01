@@ -27,6 +27,7 @@ const addEffectWorker = new Worker(
 
     let artist: string;
     let title: string;
+    const tempAudioFileName = `temp/temp_${messageId}_${String(audio.file_name).replace(/[^a-z0-9.]/gi, "")}`;
 
     sendMessage({
       bot,
@@ -42,15 +43,15 @@ const addEffectWorker = new Worker(
       artist = (info.videoDetails.media.artist || "unknown artist").replace("/", "-");
       title = (info.videoDetails.media.song || "untitled").replace("/", "-");
       const audioStream = youtubedl(audio, { filter: "audioonly" });
-      await downloadAudio({ audioStream, audioUrl: audio, messageId });
+      await downloadAudio({ audioStream, fileName: tempAudioFileName, messageId });
     } else {
       artist = (audio.performer || "unknown artist").replace("/", "-");
       title = (audio.title || "untitled").replace("/", "-");
 
-      const url = await bot.api.getFile(audio.file_id);
-      if (url.file_path) {
-        const file = await downloadAudio({ audioUrl: url.file_path, messageId });
-        fs.writeFile(`temp/temp_${messageId}.mp3`, file.data, (error) => {
+      const telegramFile = await bot.api.getFile(audio.file_id);
+      if (telegramFile.file_path) {
+        const file = await downloadAudio({ audioUrl: telegramFile.file_path, messageId });
+        fs.writeFile(tempAudioFileName, file.data, (error) => {
           if (error) {
             log.error({ messageId, error: getErrorLogs(error) }, "Error in writing file");
           }
@@ -71,7 +72,7 @@ const addEffectWorker = new Worker(
     if (reverb) commands.push("reverb", reverb.join(" "));
     if (pitch) commands.push("pitch", pitch);
     if (tempo) commands.push("tempo", tempo);
-    const soxCommand = `sox -N -V1 --ignore-length -G temp/temp_${messageId}.mp3 -C 320 -r 44100 -b 16 -c 2 -C 8 temp/temp_${messageId}.tmp.flac`;
+    const soxCommand = `sox -N -V1 --ignore-length -G ${tempAudioFileName} -C 320 -r 44100 -b 16 -c 2 -C 8 temp/temp_${messageId}.tmp.flac`;
 
     sendMessage({
       bot,
@@ -82,7 +83,7 @@ const addEffectWorker = new Worker(
       },
     });
 
-    exec(`${soxCommand} ${commands.join(" ")}`, (error, _, stderr) => {
+    exec(`${soxCommand} ${commands.join(" ")}`, async (error, _, stderr) => {
       if (error || stderr) {
         console.log(error);
         console.log(stderr);
@@ -108,7 +109,7 @@ const addEffectWorker = new Worker(
       }
 
       const tags = {
-        ...NodeID3.read(`temp/temp_${messageId}.mp3`),
+        ...NodeID3.read(tempAudioFileName),
         artist,
         title,
       };
@@ -139,8 +140,8 @@ const addEffectWorker = new Worker(
             })
             .then(() => {
               log.info({ messageId, artist, title }, "Sent audio file");
-              // fs.unlinkSync(`output/${artist} - ${title}.flac`);
-              // fs.unlinkSync(`temp/temp_${messageId}.mp3`);
+              fs.unlinkSync(`output/${artist} - ${title}.flac`);
+              fs.unlinkSync(tempAudioFileName);
             })
             .catch((error) => {
               log.error(

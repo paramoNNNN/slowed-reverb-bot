@@ -4,10 +4,19 @@ import ffmpeg from "fluent-ffmpeg";
 
 import { getErrorLogs, log } from "../helpers/logger";
 
-type DownloadAudioParams = { messageId: string } & (
-  | { audioStream: Readable }
-  | { audioUrl: string }
-);
+type DownloadAudioParams =
+  | { messageId: string; audioStream: Readable; fileName: string }
+  | { messageId: string; audioUrl: string };
+
+export function downloadAudio(params: {
+  messageId: string;
+  audioStream: Readable;
+  fileName: string;
+}): Promise<{ data: string }>;
+export function downloadAudio(params: {
+  messageId: string;
+  audioUrl: string;
+}): Promise<{ data: NodeJS.ArrayBufferView }>;
 
 export function downloadAudio({
   messageId,
@@ -18,7 +27,7 @@ export function downloadAudio({
       log.info({ messageId }, `Starting to process audio file`);
       ffmpeg(params.audioStream)
         .audioBitrate(320)
-        .save(`temp/temp_${messageId}.mp3`)
+        .save(params.fileName)
         .on("end", () => {
           log.info({ messageId }, `Processed audio file`);
           resolve({ data: "done" });
